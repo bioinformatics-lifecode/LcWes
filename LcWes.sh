@@ -34,127 +34,85 @@ process_sample() {
 #-------------------------- Filtering & Alignment ---------------------------#
 
 # Trimming first 5bp (MAX protocol)
-conda run -n FASTP fastp -i ${sample}_1.fq.gz -I ${sample}_2.fq.gz \
-	-o ${sample}_trimmed_1.fq.gz -O ${sample}_trimmed_2.fq.gz \
-	-f 5 -F 5 \
-	-w $THREADS -V \
-	-h ${sample}_trim_report.html
+#conda run -n FASTP fastp -i ${sample}_1.fq.gz -I ${sample}_2.fq.gz \
+#	-o ${sample}_trimmed_1.fq.gz -O ${sample}_trimmed_2.fq.gz \
+#	-f 5 -F 5 \
+#	-w $THREADS -V \
+#	-h ${sample}_trim_report.html
 
 # Trimming automated
-conda run -n FASTP fastp -i ${sample}_1.fq.gz -I ${sample}_2.fq.gz \
-	-o ${sample}_trimmed_1.fq.gz -O ${sample}_trimmed_2.fq.gz \
-	-w $THREADS -V \
-	-h ${sample}_trim_report.html
+#conda run -n FASTP fastp -i ${sample}_1.fq.gz -I ${sample}_2.fq.gz \
+#	-o ${sample}_trimmed_1.fq.gz -O ${sample}_trimmed_2.fq.gz \
+#	-w $THREADS -V \
+#	-h ${sample}_trim_report.html
 
-mkdir trimmed
-mv ${sample}_trimmed* trimmed
+#mkdir trimmed
+#mv ${sample}_trimmed* trimmed
 
 # Alignment
-bwa-mem2 mem -R "@RG\tID:${sample}\tLB:exome_lib\tPL:MGISEQ\tPU:unit1\tSM:${sample}" -t $THREADS \
-	$REF_GENOME \
-	trimmed/${sample}_trimmed_1.fq.gz \
-	trimmed/${sample}_trimmed_2.fq.gz | samtools view -@ $THREADS -bS | samtools sort -@ $THREADS -o ${sample}_aligned_rg.bam
+#bwa-mem2 mem -R "@RG\tID:${sample}\tLB:exome_lib\tPL:MGISEQ\tPU:unit1\tSM:${sample}" -t $THREADS \
+#	$REF_GENOME \
+#	trimmed/${sample}_trimmed_1.fq.gz \
+#	trimmed/${sample}_trimmed_2.fq.gz | samtools view -@ $THREADS -bS | samtools sort -@ $THREADS -o ${sample}_aligned_rg.bam
 
 # Mark Duplicates
-gatk MarkDuplicates \
-	-I ${sample}_aligned_rg.bam \
-	-O ${sample}_aligned_marked.bam \
-	-M ${sample}_output.metrics.txt \
-	--ASSUME_SORT_ORDER coordinate \
-	--CREATE_INDEX true \
-	--OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500
+#gatk MarkDuplicates \
+#	-I ${sample}_aligned_rg.bam \
+#	-O ${sample}_aligned_marked.bam \
+#	-M ${sample}_output.metrics.txt \
+#	--ASSUME_SORT_ORDER coordinate \
+#	--CREATE_INDEX true \
+#	--OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500
 
-rm ${sample}_aligned_rg.bam*
+#rm ${sample}_aligned_rg.bam*
 
 # Base Quality Score Recalibration
-gatk BaseRecalibrator \
-	--java-options "-Xmx48G -XX:+UseParallelGC -XX:ParallelGCThreads=$THREADS" \
-	-R $REF_GENOME_FA \
-	-I ${sample}_aligned_marked.bam \
-	--known-sites $DBSNP_138 \
-	--known-sites $Mills_1000G \
-	--known-sites $Phase1_1000G \
-	--known-sites $Known_Indels \
-	-L $TARGETS \
-	-O ${sample}_recal_data.table
+#gatk BaseRecalibrator \
+#	--java-options "-Xmx48G -XX:+UseParallelGC -XX:ParallelGCThreads=$THREADS" \
+#	-R $REF_GENOME_FA \
+#	-I ${sample}_aligned_marked.bam \
+#	--known-sites $DBSNP_138 \
+#	--known-sites $Mills_1000G \
+#	--known-sites $Phase1_1000G \
+#	--known-sites $Known_Indels \
+#	-L $TARGETS \
+#	-O ${sample}_recal_data.table
 
 # Apply BQSR
-gatk ApplyBQSR \
-	--java-options "-Xmx48G -XX:+UseParallelGC -XX:ParallelGCThreads=$THREADS" \
-	-R $REF_GENOME_FA \
-	-I ${sample}_aligned_marked.bam \
-	--bqsr-recal-file ${sample}_recal_data.table \
+#gatk ApplyBQSR \
+#	--java-options "-Xmx48G -XX:+UseParallelGC -XX:ParallelGCThreads=$THREADS" \
+#	-R $REF_GENOME_FA \
+#	-I ${sample}_aligned_marked.bam \
+#	--bqsr-recal-file ${sample}_recal_data.table \
 	-O ${sample}_aligned_marked_bqsr.bam
 
-rm ${sample}_aligned_marked.bam*
+#rm ${sample}_aligned_marked.bam*
 
 #-------------------------- GATK Variant Calling ---------------------------#
 
 # Variant calling GATK
-gatk HaplotypeCaller \
-	-R $REF_GENOME_FA \
-	-I ${sample}_aligned_marked_bqsr.bam \
-	-O ${sample}_variants.vcf.gz \
-	--native-pair-hmm-threads $THREADS
+#gatk HaplotypeCaller \
+#	-R $REF_GENOME_FA \
+#	-I ${sample}_aligned_marked_bqsr.bam \
+#	-O ${sample}_variants.vcf.gz \
+#	--native-pair-hmm-threads $THREADS
 
-# Extract SNPs
-gatk SelectVariants \
-	-V ${sample}_variants.vcf.gz \
-	-select-type SNP \
-	-O ${sample}_snps.vcf.gz
-
-# Extract INDELs
-gatk SelectVariants \
-	-V ${sample}_variants.vcf.gz \
-	-select-type INDEL \
-	-O ${sample}_indels.vcf.gz
-
-# variant filtering SNPS
 gatk VariantFiltration \
-	-V ${sample}_snps.vcf.gz \
-	-O ${sample}_snps.filtered.vcf.gz \
-	--filter-name "QD_filter" --filter-expression "QD < 0.1" \
-	--filter-name "FS_filter" --filter-expression "FS > 60.0" \
-	--filter-name "MQ_filter" --filter-expression "MQ < 20.0" \
-	--filter-name "MQRankSum_filter" --filter-expression "MQRankSum < -12.5" \
-	--filter-name "ReadPosRankSum_filter" --filter-expression "ReadPosRankSum < -8.0" \
-	--filter-name "QUAL_filter" --filter-expression "QUAL < 100.0" \
-	--filter-name "DP_filter" --filter-expression "DP < 8.0" \
-	--filter-name "SOR_filter" --filter-expression "SOR > 3.0"
-
-rm ${sample}_snps.vcf.gz*
-
-# variant filtering INDELS
-gatk VariantFiltration \
-	-V ${sample}_indels.vcf.gz \
-	-O ${sample}_indels.filtered.vcf.gz \
-	--filter-name "QD_filter" --filter-expression "QD < 0.3" \
-	--filter-name "FS_filter" --filter-expression "FS > 25.0" \
-	--filter-name "ReadPosRankSum_filter" --filter-expression "ReadPosRankSum < -20.0" \
-	--filter-name "QUAL_filter" --filter-expression "QUAL < 100.0" \
-	--filter-name "SOR_filter" --filter-expression "SOR > 10.0" \
-	--filter-name "DP_filter" --filter-expression "DP < 8.0"
-
-rm ${sample}_indels.vcf.gz*
-
-# Merge filtered SNPS and INDELS
-gatk MergeVcfs \
-	-I ${sample}_snps.filtered.vcf.gz \
-	-I ${sample}_indels.filtered.vcf.gz \
-	-O ${sample}_GATK.filtered.vcf.gz
-
-rm ${sample}_snps.filtered.vcf.gz* ${sample}_indels.filtered.vcf.gz*
+	-V ${sample}_variants.vcf.gz \
+	-O ${sample}_variants.filtered.vcf.gz \
+	--filter-name "FAIL" --filter-expression "QUAL < 100.0 || vc.getGenotype(0).getDP() < 8" \
+	--filter-name "LowQual" --filter-expression "QUAL < 30.0"
 
 mkdir tmp
 mv ${sample}_variants.vcf.gz* tmp/
 
 # Spilit mulitallelic sites / Normalize
-bcftools norm --threads $THREADS -f $REF_GENOME_FA -m "-any" ${sample}_GATK.filtered.vcf.gz | \
+bcftools norm --threads $THREADS -f $REF_GENOME_FA -m "-any" ${sample}_variants.filtered.vcf.gz | \
 vt normalize - -n -r $REF_GENOME_FA | \
 bgzip -@ $THREADS -c > ${sample}_GATK.filtered.norm.vcf.gz  && \
 tabix ${sample}_GATK.filtered.norm.vcf.gz
 
-mv ${sample}_GATK.filtered.vcf.gz* tmp/
+mv ${sample}_variants.filtered.vcf.gz* tmp/
 
 # Filter only pass
 bcftools view -f PASS ${sample}_GATK.filtered.norm.vcf.gz -o ${sample}_GATK.filtered.norm.pass.vcf

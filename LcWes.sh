@@ -34,68 +34,68 @@ process_sample() {
 #-------------------------- Filtering & Alignment ---------------------------#
 
 # Trimming first 5bp (MAX protocol)
-#conda run -n FASTP fastp -i ${sample}_1.fq.gz -I ${sample}_2.fq.gz \
-#	-o ${sample}_trimmed_1.fq.gz -O ${sample}_trimmed_2.fq.gz \
-#	-f 5 -F 5 \
-#	-w $THREADS -V \
-#	-h ${sample}_trim_report.html
+conda run -n FASTP fastp -i ${sample}_1.fq.gz -I ${sample}_2.fq.gz \
+	-o ${sample}_trimmed_1.fq.gz -O ${sample}_trimmed_2.fq.gz \
+	-f 5 -F 5 \
+	-w $THREADS -V \
+	-h ${sample}_trim_report.html
 
 # Trimming automated
-#conda run -n FASTP fastp -i ${sample}_1.fq.gz -I ${sample}_2.fq.gz \
-#	-o ${sample}_trimmed_1.fq.gz -O ${sample}_trimmed_2.fq.gz \
-#	-w $THREADS -V \
-#	-h ${sample}_trim_report.html
+conda run -n FASTP fastp -i ${sample}_1.fq.gz -I ${sample}_2.fq.gz \
+	-o ${sample}_trimmed_1.fq.gz -O ${sample}_trimmed_2.fq.gz \
+	-w $THREADS -V \
+	-h ${sample}_trim_report.html
 
-#mkdir trimmed
-#mv ${sample}_trimmed* trimmed
+mkdir trimmed
+mv ${sample}_trimmed* trimmed
 
 # Alignment
-#bwa-mem2 mem -R "@RG\tID:${sample}\tLB:exome_lib\tPL:MGISEQ\tPU:unit1\tSM:${sample}" -t $THREADS \
-#	$REF_GENOME \
-#	trimmed/${sample}_trimmed_1.fq.gz \
-#	trimmed/${sample}_trimmed_2.fq.gz | samtools view -@ $THREADS -bS | samtools sort -@ $THREADS -o ${sample}_aligned_rg.bam
+bwa-mem2 mem -R "@RG\tID:${sample}\tLB:exome_lib\tPL:MGISEQ\tPU:unit1\tSM:${sample}" -t $THREADS \
+	$REF_GENOME \
+	trimmed/${sample}_trimmed_1.fq.gz \
+	trimmed/${sample}_trimmed_2.fq.gz | samtools view -@ $THREADS -bS | samtools sort -@ $THREADS -o ${sample}_aligned_rg.bam
 
 # Mark Duplicates
-#gatk MarkDuplicates \
-#	-I ${sample}_aligned_rg.bam \
-#	-O ${sample}_aligned_marked.bam \
-#	-M ${sample}_output.metrics.txt \
-#	--ASSUME_SORT_ORDER coordinate \
-#	--CREATE_INDEX true \
-#	--OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500
+gatk MarkDuplicates \
+	-I ${sample}_aligned_rg.bam \
+	-O ${sample}_aligned_marked.bam \
+	-M ${sample}_output.metrics.txt \
+	--ASSUME_SORT_ORDER coordinate \
+	--CREATE_INDEX true \
+	--OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500
 
-#rm ${sample}_aligned_rg.bam*
+rm ${sample}_aligned_rg.bam*
 
 # Base Quality Score Recalibration
-#gatk BaseRecalibrator \
-#	--java-options "-Xmx48G -XX:+UseParallelGC -XX:ParallelGCThreads=$THREADS" \
-#	-R $REF_GENOME_FA \
-#	-I ${sample}_aligned_marked.bam \
-#	--known-sites $DBSNP_138 \
-#	--known-sites $Mills_1000G \
-#	--known-sites $Phase1_1000G \
-#	--known-sites $Known_Indels \
-#	-L $TARGETS \
-#	-O ${sample}_recal_data.table
+gatk BaseRecalibrator \
+	--java-options "-Xmx48G -XX:+UseParallelGC -XX:ParallelGCThreads=$THREADS" \
+	-R $REF_GENOME_FA \
+	-I ${sample}_aligned_marked.bam \
+	--known-sites $DBSNP_138 \
+	--known-sites $Mills_1000G \
+	--known-sites $Phase1_1000G \
+	--known-sites $Known_Indels \
+	-L $TARGETS \
+	-O ${sample}_recal_data.table
 
 # Apply BQSR
-#gatk ApplyBQSR \
-#	--java-options "-Xmx48G -XX:+UseParallelGC -XX:ParallelGCThreads=$THREADS" \
-#	-R $REF_GENOME_FA \
-#	-I ${sample}_aligned_marked.bam \
-#	--bqsr-recal-file ${sample}_recal_data.table \
+gatk ApplyBQSR \
+	--java-options "-Xmx48G -XX:+UseParallelGC -XX:ParallelGCThreads=$THREADS" \
+	-R $REF_GENOME_FA \
+	-I ${sample}_aligned_marked.bam \
+	--bqsr-recal-file ${sample}_recal_data.table \
 	-O ${sample}_aligned_marked_bqsr.bam
 
-#rm ${sample}_aligned_marked.bam*
+rm ${sample}_aligned_marked.bam*
 
 #-------------------------- GATK Variant Calling ---------------------------#
 
 # Variant calling GATK
-#gatk HaplotypeCaller \
-#	-R $REF_GENOME_FA \
-#	-I ${sample}_aligned_marked_bqsr.bam \
-#	-O ${sample}_variants.vcf.gz \
-#	--native-pair-hmm-threads $THREADS
+gatk HaplotypeCaller \
+	-R $REF_GENOME_FA \
+	-I ${sample}_aligned_marked_bqsr.bam \
+	-O ${sample}_variants.vcf.gz \
+	--native-pair-hmm-threads $THREADS
 
 gatk VariantFiltration \
 	-V ${sample}_variants.vcf.gz \

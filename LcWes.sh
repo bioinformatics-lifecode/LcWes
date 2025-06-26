@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# LCwes version 1.0.0
+# LCwes version 1.1.0
 
 # Set the directory where the FASTQ files are located
 FASTQ_DIR="."

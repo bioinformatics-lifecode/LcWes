@@ -242,7 +242,7 @@ bash LcQc.py
 # Create bed file (top 500)
 cut -f 1,2,3,10 ${sample}_GATK_prehtml.tsv | head -n 500 > ${sample}_GATK_prehtml.bed
 
-create_report ${sample}_variants.prioritized.magi.prehtml.bed \
+create_report ${sample}_GATK_prehtml.bed \
 	--fasta $REF_GENOME_FA \
 	--flanking 1000 \
 	--tracks ${sample}_aligned_marked_bqsr.bam \

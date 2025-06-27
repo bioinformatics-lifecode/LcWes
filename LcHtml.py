@@ -88,7 +88,11 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
     
     # Get the sample name from the file path
     full_filename = os.path.basename(os.path.splitext(file_path)[0])
-    sample_name = full_filename.split('_variants')[0]
+    # Remove _GATK_prehtml suffix if present
+    if full_filename.endswith('_GATK_prehtml'):
+        sample_name = full_filename.replace('_GATK_prehtml', '')
+    else:
+        sample_name = full_filename.split('_variants')[0]
     
     # Read the TSV file
     try:
@@ -171,6 +175,18 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
             --vus-h-end: #D2691E; /* Orange-red end for VUS H */
             --vus-c-end: #87CEEB; /* Light sky blue end for VUS C (more distinguishable) */
             --benign-color: #4CAF50;
+            
+            /* ClinVar colors - similar to ACMG but distinguishable */
+            --clinvar-pathogenic: #DC2626;
+            --clinvar-likely-pathogenic: #EF4444;
+            --clinvar-benign: #059669;
+            --clinvar-likely-benign: #10B981;
+            --clinvar-uncertain: #F59E0B;
+            --clinvar-conflicting: #c4b030; /* Changed to yellow */
+            --clinvar-risk-factor: #EC4899;
+            --clinvar-drug-response: #06B6D4;
+            --clinvar-other: #6B7280;
+            --clinvar-not-available: #9CA3AF;
         }}
         
         * {{
@@ -824,6 +840,7 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
         .col-variant-type {{ width: 120px; min-width: 80px; max-width: 200px; }}
         .col-gene {{ width: 80px; min-width: 60px; max-width: 150px; }}
         .col-rs {{ width: 100px; min-width: 80px; max-width: 200px; }}
+        .col-clinvar {{ width: 150px; min-width: 100px; max-width: 200px; }}
         .col-acmg {{ width: 120px; min-width: 100px; max-width: 200px; }}
         .col-acmg-rules {{ width: 160px; min-width: 120px; max-width: 300px; }}
         .col-hgvs {{ width: 200px; min-width: 150px; max-width: 400px; }}
@@ -831,6 +848,7 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
         .col-hgvs-coding {{ width: 150px; min-width: 120px; max-width: 300px; }}
         .col-inheritance {{ width: 100px; min-width: 80px; max-width: 150px; }}
         .col-effect {{ width: 140px; min-width: 100px; max-width: 250px; }}
+        .col-exon {{ width: 60px; min-width: 60px; max-width: 120px; }}
         .col-zygosity {{ width: 100px; min-width: 80px; max-width: 150px; }}
         .col-gnomad {{ width: 100px; min-width: 80px; max-width: 150px; }}
         .col-allelic-balance {{ width: 120px; min-width: 100px; max-width: 180px; }}
@@ -918,6 +936,48 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
         
         .badge-other {{
             background: linear-gradient(90deg, var(--purple) 0%, #7C3AED 100%);
+        }}
+        
+        /* ClinVar Badge Styling */
+        .badge-clinvar-pathogenic {{
+            background: linear-gradient(90deg, var(--clinvar-pathogenic) 0%, #991B1B 100%);
+        }}
+        
+        .badge-clinvar-likely-pathogenic {{
+            background: linear-gradient(90deg, var(--clinvar-likely-pathogenic) 0%, #DC2626 100%);
+        }}
+        
+        .badge-clinvar-benign {{
+            background: linear-gradient(90deg, var(--clinvar-benign) 0%, #047857 100%);
+        }}
+        
+        .badge-clinvar-likely-benign {{
+            background: linear-gradient(90deg, var(--clinvar-likely-benign) 0%, #059669 100%);
+        }}
+        
+        .badge-clinvar-uncertain {{
+            background: linear-gradient(90deg, var(--clinvar-uncertain) 0%, #D97706 100%);
+        }}
+        
+        .badge-clinvar-conflicting {{
+            background: linear-gradient(90deg, var(--clinvar-conflicting) 0%, #b08c39 100%);
+            color: var(--white-bg); /* Changed to dark text for better readability on yellow */
+        }}
+        
+        .badge-clinvar-risk-factor {{
+            background: linear-gradient(90deg, var(--clinvar-risk-factor) 0%, #BE185D 100%);
+        }}
+        
+        .badge-clinvar-drug-response {{
+            background: linear-gradient(90deg, var(--clinvar-drug-response) 0%, #0891B2 100%);
+        }}
+        
+        .badge-clinvar-other {{
+            background: linear-gradient(90deg, var(--clinvar-other) 0%, #4B5563 100%);
+        }}
+        
+        .badge-clinvar-not-available {{
+            background: linear-gradient(90deg, var(--clinvar-not-available) 0%, #6B7280 100%);
         }}
         
         /* Professional ACMG Rules Styling */
@@ -1246,6 +1306,7 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
                         <th class="col-variant-type" data-sort="variantType">VARIANT TYPE<div class="column-resizer"></div></th>
                         <th class="col-gene" data-sort="gene">GENE<div class="column-resizer"></div></th>
                         <th class="col-rs" data-sort="rs">RS<div class="column-resizer"></div></th>
+                        <th class="col-clinvar sortable" data-sort="clinvar">CLINVAR<div class="column-resizer"></div></th>
                         <th class="col-acmg sortable" data-sort="acmg">ACMG<div class="column-resizer"></div></th>
                         <th class="col-acmg-rules" data-sort="acmgRules">ACMG RULES<div class="column-resizer"></div></th>
                         <th class="col-hgvs" data-sort="hgvs">HGVS<div class="column-resizer"></div></th>
@@ -1253,6 +1314,7 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
                         <th class="col-hgvs-coding" data-sort="hgvsCoding">HGVS CODING<div class="column-resizer"></div></th>
                         <th class="col-inheritance" data-sort="inheritance">INHERITANCE<div class="column-resizer"></div></th>
                         <th class="col-effect" data-sort="effect">EFFECT<div class="column-resizer"></div></th>
+                        <th class="col-exon" data-sort="exon">EXON<div class="column-resizer"></div></th>
                         <th class="col-zygosity" data-sort="zygosity">ZYGOSITY<div class="column-resizer"></div></th>
                         <th class="col-gnomad" data-sort="gnomad">GNOMAD<div class="column-resizer"></div></th>
                         <th class="col-allelic-balance sortable" data-sort="allelicBalance">ALLELIC BALANCE<div class="column-resizer"></div></th>
@@ -1306,6 +1368,103 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
                 'Likely benign': 7,
                 'Benign': 8
             }};
+            
+            const clinvarPriority = {{
+                'Pathogenic': 1,
+                'Likely pathogenic': 2,
+                'Uncertain significance': 3,
+                'Conflicting': 4,
+                'Risk factor': 5,
+                'Drug response': 6,
+                'Other': 7,
+                'Likely benign': 8,
+                'Benign': 9,
+                'Not available': 10
+            }};
+            
+            // UPDATED ClinVar classification function - with UNK and not_provided handling
+            function classifyClinVar(clinvarValue) {{
+                if (!clinvarValue || clinvarValue === '.' || clinvarValue === '' || clinvarValue === 'N/A') {{
+                    return 'Not available';
+                }}
+                
+                const value = clinvarValue.toLowerCase();
+                
+                // CHECK FOR UNK AND NOT_PROVIDED FIRST - new additions
+                if (value.includes('unk') || value.includes('not_provided')) {{
+                    return 'Not available';
+                }}
+                
+                // CHECK CONFLICTING FIRST (before any pathogenic/benign matching)
+                if (value.includes('conflicting_classifications') || value.includes('conflicting classifications')) {{
+                    return 'Conflicting';
+                }}
+                
+                // Pathogenic variants (now safe from conflicting matches)
+                else if (value.includes('pathogenic/likely_pathogenic') || value.includes('pathogenic/likely pathogenic')) {{
+                    return 'Pathogenic';
+                }} else if (value.includes('likely_pathogenic') || value.includes('likely pathogenic')) {{
+                    return 'Likely pathogenic';
+                }} else if (value.includes('pathogenic') && !value.includes('likely')) {{
+                    return 'Pathogenic';
+                }}
+                
+                // Benign variants
+                else if (value.includes('benign/likely_benign') || value.includes('benign/likely benign')) {{
+                    return 'Benign';
+                }} else if (value.includes('likely_benign') || value.includes('likely benign')) {{
+                    return 'Likely benign';
+                }} else if (value.includes('benign') && !value.includes('likely')) {{
+                    return 'Benign';
+                }}
+                
+                // Uncertain significance
+                else if (value.includes('uncertain_significance') || value.includes('uncertain significance') || value.includes('uncertain_risk_allele')) {{
+                    return 'Uncertain significance';
+                }}
+                
+                // Risk factor
+                else if (value.includes('risk_factor') || value.includes('risk factor') || value.includes('likely_risk_allele')) {{
+                    return 'Risk factor';
+                }}
+                
+                // Drug response
+                else if (value.includes('drug_response') || value.includes('drug response')) {{
+                    return 'Drug response';
+                }}
+                
+                // Other categories
+                else {{
+                    return 'Other';
+                }}
+            }}
+            
+            // ClinVar badge class function
+            function getClinVarBadgeClass(classification) {{
+                switch(classification) {{
+                    case 'Pathogenic':
+                        return 'badge-clinvar-pathogenic';
+                    case 'Likely pathogenic':
+                        return 'badge-clinvar-likely-pathogenic';
+                    case 'Benign':
+                        return 'badge-clinvar-benign';
+                    case 'Likely benign':
+                        return 'badge-clinvar-likely-benign';
+                    case 'Uncertain significance':
+                        return 'badge-clinvar-uncertain';
+                    case 'Conflicting':
+                        return 'badge-clinvar-conflicting';
+                    case 'Risk factor':
+                        return 'badge-clinvar-risk-factor';
+                    case 'Drug response':
+                        return 'badge-clinvar-drug-response';
+                    case 'Other':
+                        return 'badge-clinvar-other';
+                    case 'Not available':
+                    default:
+                        return 'badge-clinvar-not-available';
+                }}
+            }}
             
             // Enhanced Filters System
             class FilterSystem {{
@@ -1556,13 +1715,14 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
                 }}
                 
                 setInitialColumnWidths() {{
-                    // Define precise initial widths for each column
+                    // Define precise initial widths for each column (updated for new columns)
                     const initialWidths = [
                         60,   // RANK
                         180,  // VARIANT
                         120,  // VARIANT TYPE
                         80,   // GENE
                         100,  // RS
+                        155,  // CLINVAR (new)
                         135,  // ACMG
                         160,  // ACMG RULES
                         200,  // HGVS
@@ -1570,6 +1730,7 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
                         150,  // HGVS CODING
                         115,  // INHERITANCE
                         140,  // EFFECT
+                        55,   // EXON (new)
                         100,  // ZYGOSITY
                         100,  // GNOMAD
                         145,  // ALLELIC BALANCE
@@ -1640,6 +1801,12 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
                             case 'acmg':
                                 aVal = acmgPriority[getVariantValue(a, 'ACMG')] || 999;
                                 bVal = acmgPriority[getVariantValue(b, 'ACMG')] || 999;
+                                break;
+                            case 'clinvar':
+                                const aClinVar = classifyClinVar(getVariantValue(a, 'clinvar: Clinvar '));
+                                const bClinVar = classifyClinVar(getVariantValue(b, 'clinvar: Clinvar '));
+                                aVal = clinvarPriority[aClinVar] || 999;
+                                bVal = clinvarPriority[bClinVar] || 999;
                                 break;
                             case 'depth':
                                 aVal = parseFloat(getVariantValue(a, 'DP', '0')) || 0;
@@ -1882,7 +2049,7 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
                 if (displayedVariants.length === 0) {{
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="17" style="text-align: center; padding: 20px;">
+                            <td colspan="19" style="text-align: center; padding: 20px;">
                                 No variants match your search criteria.
                             </td>
                         </tr>
@@ -1940,6 +2107,23 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
                     rsCell.className = 'col-rs';
                     rsCell.textContent = getVariantValue(variant, 'avsnp151');
                     row.appendChild(rsCell);
+                    
+                    // CLINVAR (NEW COLUMN)
+                    const clinvarCell = document.createElement('td');
+                    clinvarCell.className = 'col-clinvar';
+                    const clinvarValue = getVariantValue(variant, 'clinvar: Clinvar ');
+                    const clinvarClassification = classifyClinVar(clinvarValue);
+                    
+                    if (clinvarClassification !== 'Not available') {{
+                        const badge = document.createElement('span');
+                        badge.className = `badge ${{getClinVarBadgeClass(clinvarClassification)}}`;
+                        badge.textContent = clinvarClassification;
+                        clinvarCell.appendChild(badge);
+                    }} else {{
+                        clinvarCell.textContent = 'N/A';
+                        clinvarCell.className += ' not-available';
+                    }}
+                    row.appendChild(clinvarCell);
                     
                     // ACMG
                     const acmgCell = document.createElement('td');
@@ -2013,6 +2197,12 @@ def generate_html(file_path, output_path=None, coverage_metrics_path=None):
                         effectCell.className += ' not-available';
                     }}
                     row.appendChild(effectCell);
+                    
+                    // EXON (NEW COLUMN)
+                    const exonCell = document.createElement('td');
+                    exonCell.className = 'col-exon';
+                    exonCell.textContent = getVariantValue(variant, 'ANN[0].RANK');
+                    row.appendChild(exonCell);
                     
                     // ZYGOSITY
                     const zygosityCell = document.createElement('td');

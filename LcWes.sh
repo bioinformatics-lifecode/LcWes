@@ -214,26 +214,24 @@ mv ${sample}_GATK_merged.tsv tmp/
 mv ${sample}_GATK.snpsift.tsv tmp/
 mv ${sample}_GATK.filtered.norm.snpeff.vcf.gz tmp/
 
-#-------------------------- Variant Prioritization  ---------------------------#
-
-# Prioritize Variants
-python LcPrio.py -i ${sample}_GATK_merged_split.tsv -o ${sample}_variants.prioritized.tsv -n 25000 -f tsv
-
-#-------------------------- MAGI ACMG implementation ---------------------------#
+#-------------------------- MAGI ACMG Implementation & Prioritization ---------------------------#
 
 # Implement MAGI Vus sub classification
-python LcMagi.py ${sample}_variants.prioritized.tsv ${sample}_variants.prioritized.magi.tsv
+python LcMagi.py ${sample}_GATK_merged_split.tsv ${sample}_GATK_magi.tsv
+
+
+# Prioritize Variants
+python LcPrio.py ${sample}_GATK_magi.tsv ${sample}_GATK_prioritized.tsv
 
 #-------------------------- Process File for HTML ---------------------------#
 
 # Create new info columns
-python LcPrehtml.py ${sample}_variants.prioritized.magi.tsv ${sample}_variants.prioritized.magi.prehtml.tsv
+python LcPrehtml.py ${sample}_GATK_prioritized.tsv ${sample}_GATK_prehtml.tsv
 
-mv ${sample}_variants.prioritized.magi.tsv tmp/
 mv ${sample}_GATK_merged_split.tsv tmp/
+mv ${sample}_GATK_magi.tsv tmp/
+mv ${sample}_GATK_prioritized.tsv tmp/
 mv ${sample}_variants.prioritized.magi_VUS_summary.tsv tmp/
-mv ${sample}_variants.prioritized.summary.txt tmp/
-mv ${sample}_variants.prioritized.tsv tmp/
 
 #-------------------------- Extract QC ---------------------------#
 
@@ -242,7 +240,7 @@ bash LcQc.py
 #-------------------------- IGV report ---------------------------#
 
 # Create bed file (top 500)
-cut -f 1,2,3,10 ${sample}_variants.prioritized.magi.prehtml.tsv | head -n 500 > ${sample}_variants.prioritized.magi.prehtml.bed
+cut -f 1,2,3,10 ${sample}_GATK_prehtml.tsv | head -n 500 > ${sample}_GATK_prehtml.bed
 
 create_report ${sample}_variants.prioritized.magi.prehtml.bed \
 	--fasta $REF_GENOME_FA \
@@ -252,7 +250,7 @@ create_report ${sample}_variants.prioritized.magi.prehtml.bed \
 
 #-------------------------- HTML Report ---------------------------#
 
-python LcHtml.py ${sample}_variants.prioritized.magi.prehtml.tsv ${sample}.html ${sample}_coverage_metrics.txt
+python LcHtml.py ${sample}_GATK_prehtml.tsv ${sample}.html ${sample}_coverage_metrics.txt
 
 }
 

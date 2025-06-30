@@ -9,7 +9,7 @@ FASTQ_DIR="."
 # Alignment-Variant Calling
 REF_GENOME="/home/administrator/Lc/LcDatabase_hg19/bwa_index/hs37d5/hs37d5"
 REF_GENOME_FA="/home/administrator/Lc/LcDatabase_hg19/bwa_index/hs37d5/hs37d5.fa"
-TARGETS="/home/administrator/lifecode/genomes/bed_files/WES_HG19/S33266340_Covered.adj.bed"
+TARGETS="/home/administrator/Lc/LcDatabase_hg19/bed_files/WES_HG19/S33266340_Covered.adj.bed"
 # Annotation
 SNPEFF_JAR="/home/administrator/snpeff/snpEff/snpEff.jar"
 CLINVAR_VCF="/home/administrator/Lc/LcDatabase_hg19/GATK_resources/clinvar.chr.vcf.gz"

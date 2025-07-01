@@ -7,8 +7,8 @@ FASTQ_DIR="."
 
 # Set paths to required tools and reference files
 # Alignment-Variant Calling
-REF_GENOME="/home/administrator/Lc/LcDatabase_hg19/bwa_index/hs37d5/hs37d5"
-REF_GENOME_FA="/home/administrator/Lc/LcDatabase_hg19/bwa_index/hs37d5/hs37d5.fa"
+REF_GENOME="/home/administrator/Lc/LcDatabase_hg19/bwa_index/hs37d5/hs37d5.noalt"
+REF_GENOME_FA="/home/administrator/Lc/LcDatabase_hg19/bwa_index/hs37d5/hs37d5.noalt.fa"
 TARGETS="/home/administrator/Lc/LcDatabase_hg19/bed_files/WES_HG19/S33266340_Covered.adj.bed"
 # Annotation
 SNPEFF_JAR="/home/administrator/snpeff/snpEff/snpEff.jar"
@@ -17,11 +17,11 @@ Mills_1000G="/home/administrator/Lc/LcDatabase_hg19/GATK_resources/Mills_and_100
 Phase1_1000G="/home/administrator/Lc/LcDatabase_hg19/GATK_resources/1000G_phase1.indels.b37.chr.vcf"
 Known_Indels="/home/administrator/Lc/LcDatabase_hg19/GATK_resources/Homo_sapiens_assembly19.known_indels.chr.vcf"
 DBSNP_138="/home/administrator/Lc/LcDatabase_hg19/GATK_resources/dbsnp_138.b37.chr.vcf"
-GNOMAD_VCF="/mnt/bioinfo-storage/Databases/hg19/gnomAD/hg19/merged/gnomad_renamed.vcf.gz"
+GNOMAD_VCF="empty"
 # Downstream analysis
 INTERVARDB="/home/administrator/Lc/LcDatabase_hg19/intervar"
 HUMANDB="/home/administrator/Lc/LcDatabase_hg19/humandb_hg19"
-FREEBAYES_REGIONS="/home/administrator/lifecode/genomes/databases/freebayes_regions_hg19/hg19_regions.txt"
+FREEBAYES_REGIONS="emtpy"
 # Computation
 THREADS=28
 

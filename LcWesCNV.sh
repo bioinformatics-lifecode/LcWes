@@ -68,22 +68,15 @@ awk 'NR>27 && ($6 > 0.5 || $6 < -0.5) {print $1 "\t" $2 "\t" $3 "\t" $4 "\t" $5 
 
 # Convert + to DUP and - to DEL, keep header, filter out zero-length CNVs
 awk 'BEGIN{OFS="\t"} {
-    # Handle header line
-    if (NR == 1) {
-        print $1, $2, $3, $4  # Print header as-is
+    if ($6 == "+") {
+        cnv_type = "DUP"
+    } else if ($6 == "-") {
+        cnv_type = "DEL"  
     } else {
-        # Process data lines
-        if ($6 == "+") {
-            cnv_type = "DUP"
-        } else if ($6 == "-") {
-            cnv_type = "DEL"
-        } else {
-            cnv_type = $6  # In case there are other values
-        }
-        # Only print if end position > start position (filter out zero-length CNVs)
-        if ($3 > $2) {
-            print $1, $2, $3, cnv_type
-        }
+        cnv_type = $6
+    }
+    if ($3 > $2) {
+        print $1, $2, $3, cnv_type
     }
 }' ${sample}.cnv.filtered.bed > ${sample}.CNV.bed
 

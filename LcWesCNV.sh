@@ -7,6 +7,8 @@ FASTQ_DIR="."
 REF_GENOME="/home/administrator/Lc/LcDatabase_hg19/bwa_index/hs37d5/hs37d5.noalt"
 REF_GENOME_FA="/home/administrator/Lc/LcDatabase_hg19/bwa_index/hs37d5/hs37d5.noalt.fa"
 TARGETS="/home/administrator/Lc/LcDatabase_hg19/bed_files/WES_HG19/S33266340_Covered.adj.bed"
+MAPPABILITY_BED="/home/administrator/Lc/LcDatabase_hg19/CNV_hg19/wes_cnv/mappability_sorted.bed"
+SEG_BED="/home/administrator/Lc/LcDatabase_hg19/CNV_hg19/wes_cnv/segdups.noalt.bed"
 
 THREADS=28
 
@@ -28,8 +30,8 @@ gatk AnnotateIntervals \
 	-R $REF_GENOME_FA \
 	-L ${sample}.targets.preprocessed.interval_list \
 	--interval-merging-rule OVERLAPPING_ONLY \
-	--mappability-track mappability_sorted.bed \
-	--segmental-duplication-track segdups.noalt.bed \
+	--mappability-track $MAPPABILITY_BED \
+	--segmental-duplication-track $SEG_BED \
 	-O ${sample}.annotated.interval_list
 
 #-------------------------- CNV Read Count Collection ---------------------------#
